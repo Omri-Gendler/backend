@@ -9,7 +9,9 @@
         "dev": "nodemon server.js",
         "server:dev": "nodemon server.js",
         "server:prod": "set NODE_ENV=production&node server.js",
-        "server:prod:mac": "export NODE_ENV=production && node server.js"
+        "server:prod:mac": "export NODE_ENV=production && node server.js",
+        "atlas": "set NODE_ENV=production&node server.js",
+        "atlas:mac": "export NODE_ENV=production && node server.js"
     },
     "author": "Me",
     "license": "ISC",

@@ -1,0 +1,382 @@
+{
+  "info": {
+    "name": "Sprint4 Backend API",
+    "description": "Complete API collection for testing Cars, Stations, Users, Auth, and Reviews",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3030/api"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"puki\",\n  \"password\": \"123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"newuser\",\n  \"password\": \"123\",\n  \"fullname\": \"New User\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cars",
+      "item": [
+        {
+          "name": "Get All Cars",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/car",
+              "host": ["{{baseUrl}}"],
+              "path": ["car"]
+            }
+          }
+        },
+        {
+          "name": "Get Car by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/car/:carId",
+              "host": ["{{baseUrl}}"],
+              "path": ["car", ":carId"],
+              "variable": [
+                {
+                  "key": "carId",
+                  "value": "YOUR_CAR_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Car",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vendor\": \"Tesla Model 3\",\n  \"speed\": 150\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/car",
+              "host": ["{{baseUrl}}"],
+              "path": ["car"]
+            }
+          }
+        },
+        {
+          "name": "Update Car",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"_id\": \"YOUR_CAR_ID_HERE\",\n  \"vendor\": \"Tesla Model S\",\n  \"speed\": 200\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/car/:carId",
+              "host": ["{{baseUrl}}"],
+              "path": ["car", ":carId"],
+              "variable": [
+                {
+                  "key": "carId",
+                  "value": "YOUR_CAR_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Car",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/car/:carId",
+              "host": ["{{baseUrl}}"],
+              "path": ["car", ":carId"],
+              "variable": [
+                {
+                  "key": "carId",
+                  "value": "YOUR_CAR_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Car Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"txt\": \"Great car!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/car/:carId/msg",
+              "host": ["{{baseUrl}}"],
+              "path": ["car", ":carId", "msg"],
+              "variable": [
+                {
+                  "key": "carId",
+                  "value": "YOUR_CAR_ID_HERE"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stations",
+      "item": [
+        {
+          "name": "Get All Stations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/station",
+              "host": ["{{baseUrl}}"],
+              "path": ["station"]
+            }
+          }
+        },
+        {
+          "name": "Get Station by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/station/:stationId",
+              "host": ["{{baseUrl}}"],
+              "path": ["station", ":stationId"],
+              "variable": [
+                {
+                  "key": "stationId",
+                  "value": "YOUR_STATION_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Station",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Downtown Station\",\n  \"location\": \"City Center\",\n  \"capacity\": 50\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/station",
+              "host": ["{{baseUrl}}"],
+              "path": ["station"]
+            }
+          }
+        },
+        {
+          "name": "Update Station",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"_id\": \"YOUR_STATION_ID_HERE\",\n  \"name\": \"Updated Station\",\n  \"location\": \"New Location\",\n  \"capacity\": 75\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/station/:stationId",
+              "host": ["{{baseUrl}}"],
+              "path": ["station", ":stationId"],
+              "variable": [
+                {
+                  "key": "stationId",
+                  "value": "YOUR_STATION_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Station",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/station/:stationId",
+              "host": ["{{baseUrl}}"],
+              "path": ["station", ":stationId"],
+              "variable": [
+                {
+                  "key": "stationId",
+                  "value": "YOUR_STATION_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Station Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"txt\": \"Great station location!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/station/:stationId/msg",
+              "host": ["{{baseUrl}}"],
+              "path": ["station", ":stationId", "msg"],
+              "variable": [
+                {
+                  "key": "stationId",
+                  "value": "YOUR_STATION_ID_HERE"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["user"]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "YOUR_USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Get All Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/review",
+              "host": ["{{baseUrl}}"],
+              "path": ["review"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -12,6 +12,9 @@ if (process.env.NODE_ENV === 'production') {
 //* Uncomment the following line to use guest mode
 // config.isGuestMode = true
 
-
-//* Uncomment the following line to use the production configuration (Mongo Atlas DB)
+//* Quick Atlas Testing - Uncomment the following line to use Atlas without setting NODE_ENV
 // config = configProd
+
+console.log(`🚀 Using ${process.env.NODE_ENV === 'production' ? 'PRODUCTION (Atlas)' : 'DEVELOPMENT (Local)'} database configuration`)
+console.log(`📍 Database URL: ${config.dbURL}`)
+console.log(`📦 Database Name: ${config.dbName}`)
