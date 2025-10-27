@@ -11,7 +11,8 @@
         "server:prod": "set NODE_ENV=production&node server.js",
         "server:prod:mac": "export NODE_ENV=production && node server.js",
         "atlas": "set NODE_ENV=production&node server.js",
-        "atlas:mac": "export NODE_ENV=production && node server.js"
+        "atlas:mac": "export NODE_ENV=production && node server.js",
+        "build": "echo 'No build step required'"
     },
     "author": "Me",
     "license": "ISC",
@@ -20,7 +21,7 @@
         "cookie-parser": "^1.4.7",
         "cors": "^2.8.5",
         "cryptr": "^6.3.0",
-        "dotenv": "^17.2.3",
+        "dotenv": "^16.6.1",
         "express": "^5.1.0",
         "mongodb": "^6.15.0",
         "socket.io": "^4.8.1"
