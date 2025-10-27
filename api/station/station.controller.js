@@ -32,9 +32,10 @@ export async function getStationById(req, res) {
 export async function addStation(req, res) {
     const { loggedinUser, body } = req
     const station = {
-        name: body.name,
-        location: body.location,
-        capacity: body.capacity
+        title: body.title,
+        description: body.description,
+        spotifyId: body.spotifyId,
+        imgUrl: body.imgUrl
     }
     try {
         station.owner = loggedinUser

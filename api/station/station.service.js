@@ -87,9 +87,10 @@ async function add(station) {
 
 async function update(station) {
     const stationToSave = { 
-        name: station.name, 
-        location: station.location,
-        capacity: station.capacity 
+        title: station.title, 
+        description: station.description,
+        spotifyId: station.spotifyId,
+        imgUrl: station.imgUrl
     }
 
     try {
@@ -135,8 +136,13 @@ async function removeStationMsg(stationId, msgId) {
 }
 
 function _buildCriteria(filterBy) {
-    const criteria = {
-        name: { $regex: filterBy.txt, $options: 'i' },
+    const criteria = {}
+    
+    if (filterBy.txt) {
+        criteria.$or = [
+            { title: { $regex: filterBy.txt, $options: 'i' } },
+            { description: { $regex: filterBy.txt, $options: 'i' } }
+        ]
     }
 
     return criteria

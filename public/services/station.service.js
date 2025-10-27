@@ -40,8 +40,9 @@ async function addStationMsg(stationId, txt) {
 
 function getEmptyStation() {
     return {
-        name: 'Station-' + (Date.now() % 1000),
-        location: 'Location-' + getRandomIntInclusive(1, 100),
-        capacity: getRandomIntInclusive(10, 100),
+        title: 'My Playlist ' + (Date.now() % 1000),
+        description: 'A great music playlist for any occasion',
+        spotifyId: '37i9dQZF1DX' + getRandomIntInclusive(100000, 999999),
+        imgUrl: 'https://i.scdn.co/image/ab67706f00000002f2c72a29eafebf594195be53'
     }
 }

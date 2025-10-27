@@ -47,7 +47,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"newuser\",\n  \"password\": \"123\",\n  \"fullname\": \"New User\"\n}"
+              "raw": "{\n  \"username\": \"puki\",\n  \"password\": \"123\",\n  \"fullname\": \"Puki Test User\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/signup",
@@ -243,7 +243,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Downtown Station\",\n  \"location\": \"City Center\",\n  \"capacity\": 50\n}"
+              "raw": "{\n  \"title\": \"Chill Vibes\",\n  \"description\": \"Perfect playlist for relaxing and unwinding\",\n  \"spotifyId\": \"37i9dQZF1DXbrUpGvoi3TS\",\n  \"imgUrl\": \"https://i.scdn.co/image/ab67706f00000002f2c72a29eafebf594195be53\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/station",
@@ -264,7 +264,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"_id\": \"YOUR_STATION_ID_HERE\",\n  \"name\": \"Updated Station\",\n  \"location\": \"New Location\",\n  \"capacity\": 75\n}"
+              "raw": "{\n  \"_id\": \"YOUR_STATION_ID_HERE\",\n  \"title\": \"Updated Playlist\",\n  \"description\": \"Updated description for the playlist\",\n  \"spotifyId\": \"37i9dQZF1DXupdatedId\",\n  \"imgUrl\": \"https://i.scdn.co/image/updated_image_url\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/station/:stationId",
