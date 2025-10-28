@@ -5,6 +5,7 @@ import { makeId } from '../../services/util.service.js'
 import { dbService } from '../../services/db.service.js'
 import { asyncLocalStorage } from '../../services/als.service.js'
 
+
 const PAGE_SIZE = 3
 
 export const stationService = {
@@ -13,8 +14,8 @@ export const stationService = {
     getById,
     add,
     update,
-    addStationMsg,
-    removeStationMsg,
+    addSong,
+    removeSong,
 }
 
 async function query(filterBy = { txt: '' }) {
@@ -80,7 +81,7 @@ async function add(station) {
         logger.info('Got collection, attempting insertOne...')
 
         logger.info('Attempting to insert full station data:', JSON.stringify(station))
-        const result = await collection.insertOne(station) 
+        const result = await collection.insertOne(station)
         logger.info('insertOne successful, result:', JSON.stringify(result))
         logger.info('Returning station object after insert (should have _id):', JSON.stringify(station))
         return station
@@ -91,8 +92,8 @@ async function add(station) {
 }
 
 async function update(station) {
-    const stationToSave = { 
-        title: station.title, 
+    const stationToSave = {
+        title: station.title,
         description: station.description,
         spotifyId: station.spotifyId,
         imgUrl: station.imgUrl
@@ -142,7 +143,7 @@ async function removeStationMsg(stationId, msgId) {
 
 function _buildCriteria(filterBy) {
     const criteria = {}
-    
+
     if (filterBy.txt) {
         criteria.$or = [
             { title: { $regex: filterBy.txt, $options: 'i' } },
@@ -156,4 +157,71 @@ function _buildCriteria(filterBy) {
 function _buildSort(filterBy) {
     if (!filterBy.sortField) return {}
     return { [filterBy.sortField]: filterBy.sortDir }
+}
+
+export async function addSong(stationId, song, loggedinUser) {
+    try {
+        const collection = await dbService.getCollection('station')
+        const stationObjectId = ObjectId.createFromHexString(stationId)
+        const station = await collection.findOne({ _id: stationObjectId })
+        if (!station) throw new Error('Station not found')
+        if (!loggedinUser.isAdmin && station.owner?._id?.toString() !== loggedinUser._id.toString()) {
+            throw new Error('Not authorized')
+        }
+        const songExists = station.songs?.some(s => s.id === song.id)
+        if (songExists) {
+            throw new Error('Song already exists in station')
+        }
+        const updateResult = await collection.updateOne(
+            { _id: stationObjectId },
+            { $push: { songs: song } }
+        )
+
+        if (updateResult.modifiedCount === 0) {
+            throw new Error('Failed to update station with new song')
+        }
+
+        const updatedStation = await getById(stationId)
+        return updatedStation
+
+    } catch (err) {
+        logger.error(`cannot add song ${song.id} to station ${stationId}`, err)
+        throw err
+    }
+}
+
+export async function removeSong(stationId, songIdToRemove, loggedinUser) {
+    try {
+        const collection = await dbService.getCollection('station')
+        const stationObjectId = ObjectId.createFromHexString(stationId)
+
+        const station = await collection.findOne({ _id: stationObjectId })
+        if (!station) throw new Error('Station not found')
+        if (!loggedinUser.isAdmin && station.owner?._id?.toString() !== loggedinUser._id.toString()) {
+            throw new Error('Not authorized')
+        }
+
+        const songExists = station.songs?.some(s => s.id === songIdToRemove)
+        if (!songExists) {
+            logger.warn(`Song ${songIdToRemove} not found in station ${stationId} for removal.`)
+            return station
+        }
+
+
+        const updateResult = await collection.updateOne(
+            { _id: stationObjectId },
+            { $pull: { songs: { id: songIdToRemove } } }
+        )
+
+        if (updateResult.modifiedCount === 0) {
+            logger.warn(`Song ${songIdToRemove} was not removed from station ${stationId}, perhaps it was already gone.`)
+        }
+
+        const updatedStation = await getById(stationId)
+        return updatedStation
+
+    } catch (err) {
+        logger.error(`cannot remove song ${songIdToRemove} from station ${stationId}`, err)
+        throw err
+    }
 }
