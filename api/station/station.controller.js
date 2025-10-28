@@ -168,7 +168,7 @@ export async function addSongToStation(req, res) {
         const songWithMeta = {
             ...songToAdd,
             addedBy: {
-                _id: ObjectId.createFromHexString(loggedinUser._id), 
+                _id: ObjectId.createFromHexString(loggedinUser._id),
                 fullname: loggedinUser.fullname
             },
             addedAt: Date.now()
@@ -189,5 +189,35 @@ export async function addSongToStation(req, res) {
         }
         logger.error(`Failed to add song to station ${stationId}`, err)
         res.status(500).send({ err: 'Failed to add song' })
+    }
+}
+
+export async function likeStation(req, res) {
+    const { loggedinUser } = req
+    const { id: stationId } = req.params
+    try {
+        const updatedStation = await stationService.addLike(stationId, loggedinUser._id)
+        res.json(updatedStation)
+    } catch (err) {
+        logger.error(`Failed to like station ${stationId} by user ${loggedinUser._id}`, err)
+        if (err.message === 'Station not found') {
+            return res.status(404).send({ err: err.message })
+        }
+        res.status(500).send({ err: 'Failed to like station' })
+    }
+}
+
+export async function unlikeStation(req, res) {
+    const { loggedinUser } = req
+    const { id: stationId } = req.params
+    try {
+        const updatedStation = await stationService.removeLike(stationId, loggedinUser._id)
+        res.json(updatedStation)
+    } catch (err) {
+        logger.error(`Failed to unlike station ${stationId} by user ${loggedinUser._id}`, err)
+        if (err.message === 'Station not found') {
+            return res.status(404).send({ err: err.message })
+        }
+        res.status(500).send({ err: 'Failed to unlike station' })
     }
 }

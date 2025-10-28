@@ -1,15 +1,18 @@
+import { ObjectId } from 'mongodb'
 import { dbService } from '../../services/db.service.js'
 import { logger } from '../../services/logger.service.js'
 import { reviewService } from '../review/review.service.js'
-import { ObjectId } from 'mongodb'
 
 export const userService = {
-    add, // Create (Signup)
-    getById, // Read (Profile page)
-    update, // Update (Edit profile)
-    remove, // Delete (remove user)
-    query, // List (of users)
-    getByUsername, // Used for Login
+    add,
+    getById,
+    update,
+    remove,
+    query,
+    getByUsername,
+    getLikedSongs,
+    addLikedSong,
+    removeLikedSong,
 }
 
 async function query(filterBy = {}) {
@@ -133,4 +136,64 @@ function _buildCriteria(filterBy) {
         criteria.score = { $gte: filterBy.minBalance }
     }
     return criteria
+}
+
+async function getLikedSongs(userId) {
+    try {
+        const userObjectId = ObjectId.createFromHexString(userId)
+        const collection = await dbService.getCollection('user')
+        const user = await collection.findOne({ _id: userObjectId }, { projection: { likedSongs: 1 } })
+        if (!user) throw new Error('User not found')
+        return user.likedSongs || []
+    } catch (err) {
+        logger.error(`cannot get liked songs for user ${userId}`, err)
+        throw err
+    }
+}
+
+async function addLikedSong(userId, song) {
+    try {
+        const userObjectId = ObjectId.createFromHexString(userId)
+        const collection = await dbService.getCollection('user')
+
+        const user = await collection.findOne({ _id: userObjectId }, { projection: { likedSongs: 1 } })
+        if (user && user.likedSongs?.some(s => s.id === song.id)) {
+            logger.warn(`Song ${song.id} already liked by user ${userId}`)
+            return user
+        }
+
+        const updateResult = await collection.updateOne(
+            { _id: userObjectId },
+            { $push: { likedSongs: song } }
+        )
+
+        if (updateResult.modifiedCount === 0 && updateResult.matchedCount === 0) {
+            throw new Error('User not found or song not added')
+        }
+
+        const updatedUser = await collection.findOne({ _id: userObjectId }, { projection: { likedSongs: 1 } });
+        return updatedUser || { likedSongs: [] }
+
+    } catch (err) {
+        logger.error(`cannot add liked song ${song.id} for user ${userId}`, err)
+        throw err
+    }
+}
+
+async function removeLikedSong(userId, songIdToRemove) {
+    try {
+        const userObjectId = ObjectId.createFromHexString(userId)
+        const collection = await dbService.getCollection('user')
+
+        const updateResult = await collection.updateOne(
+            { _id: userObjectId },
+            { $pull: { likedSongs: { id: songIdToRemove } } }
+        )
+        const updatedUser = await collection.findOne({ _id: userObjectId }, { projection: { likedSongs: 1 } })
+        return updatedUser || { likedSongs: [] }
+
+    } catch (err) {
+        logger.error(`cannot remove liked song ${songIdToRemove} for user ${userId}`, err)
+        throw err
+    }
 }

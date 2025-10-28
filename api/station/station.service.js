@@ -16,6 +16,8 @@ export const stationService = {
     update,
     addSong,
     removeSong,
+    addLike,
+    removeLike,
 }
 
 async function query(filterBy = { txt: '' }) {
@@ -222,6 +224,52 @@ export async function removeSong(stationId, songIdToRemove, loggedinUser) {
 
     } catch (err) {
         logger.error(`cannot remove song ${songIdToRemove} from station ${stationId}`, err)
+        throw err
+    }
+}
+
+async function addLike(stationId, userId) {
+    try {
+        const collection = await dbService.getCollection('station')
+        const stationObjectId = ObjectId.createFromHexString(stationId)
+        const userObjectId = ObjectId.createFromHexString(userId)
+
+        const updateResult = await collection.updateOne(
+            { _id: stationObjectId },
+            { $addToSet: { likedByUsers: userObjectId } }
+        )
+
+        if (updateResult.matchedCount === 0) {
+            throw new Error('Station not found')
+        }
+        const updatedStation = await getById(stationId)
+        return updatedStation
+
+    } catch (err) {
+        logger.error(`cannot add like to station ${stationId} for user ${userId}`, err)
+        throw err
+    }
+}
+
+async function removeLike(stationId, userId) {
+    try {
+        const collection = await dbService.getCollection('station')
+        const stationObjectId = ObjectId.createFromHexString(stationId)
+        const userObjectId = ObjectId.createFromHexString(userId)
+
+        const updateResult = await collection.updateOne(
+            { _id: stationObjectId },
+            { $pull: { likedByUsers: userObjectId } }
+        )
+
+        if (updateResult.matchedCount === 0) {
+            throw new Error('Station not found')
+        }
+        const updatedStation = await getById(stationId)
+        return updatedStation
+
+    } catch (err) {
+        logger.error(`cannot remove like from station ${stationId} for user ${userId}`, err)
         throw err
     }
 }

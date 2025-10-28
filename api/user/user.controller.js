@@ -46,3 +46,53 @@ export async function updateUser(req, res) {
         res.status(400).send({ err: 'Failed to update user' })
     }
 }
+
+export async function getUserLikes(req, res) {
+    const { loggedinUser } = req
+    try {
+        const likedSongs = await userService.getLikedSongs(loggedinUser._id)
+        res.json(likedSongs || [])
+    } catch (err) {
+        logger.error(`Failed to get liked songs for user ${loggedinUser._id}`, err)
+        res.status(500).send({ err: 'Failed to get liked songs' })
+    }
+}
+
+export async function addUserLike(req, res) {
+    const { loggedinUser } = req
+    const songToAdd = req.body
+
+    if (!songToAdd || !songToAdd.id || !songToAdd.title) {
+        logger.error('Attempted to add invalid song data to likes', songToAdd)
+        return res.status(400).send({ err: 'Invalid song data provided' })
+    }
+
+    try {
+        const updatedUser = await userService.addLikedSong(loggedinUser._id, songToAdd)
+        res.json(updatedUser.likedSongs || [])
+    } catch (err) {
+        logger.error(`Failed to add liked song for user ${loggedinUser._id}`, err)
+        if (err.message === 'Song already liked') {
+            const currentLikes = await userService.getLikedSongs(loggedinUser._id)
+            return res.status(200).json(currentLikes || [])
+        }
+        res.status(500).send({ err: 'Failed to add liked song' })
+    }
+}
+
+export async function removeUserLike(req, res) {
+    const { loggedinUser } = req
+    const { songId } = req.params
+
+    if (!songId) {
+        return res.status(400).send({ err: 'Missing songId parameter' })
+    }
+
+    try {
+        const updatedUser = await userService.removeLikedSong(loggedinUser._id, songId)
+        res.json(updatedUser.likedSongs || [])
+    } catch (err) {
+        logger.error(`Failed to remove liked song ${songId} for user ${loggedinUser._id}`, err)
+        res.status(500).send({ err: 'Failed to remove liked song' })
+    }
+}
