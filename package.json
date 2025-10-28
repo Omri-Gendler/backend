@@ -12,7 +12,8 @@
         "server:prod:mac": "export NODE_ENV=production && node server.js",
         "atlas": "set NODE_ENV=production&node server.js",
         "atlas:mac": "export NODE_ENV=production && node server.js",
-        "build": "echo 'No build step required'"
+        "build": "echo 'No build step required'",
+        "db:seed": "node scripts/seedDb.js"
     },
     "author": "Me",
     "license": "ISC",

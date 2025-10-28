@@ -30,20 +30,35 @@ export async function getStationById(req, res) {
 }
 
 export async function addStation(req, res) {
-    const { loggedinUser, body } = req
-    const station = {
-        title: body.title,
-        description: body.description,
-        spotifyId: body.spotifyId,
-        imgUrl: body.imgUrl
+    logger.info('--- Inside addStation controller ---')
+    const { loggedinUser } = req
+    const { name, description, imgUrl, songs, tags } = req.body
+
+    const stationToAdd = {
+        name: name || 'Unnamed Station',
+        description: description || '',
+        imgUrl: imgUrl || '/img/unnamed-song.png',
+        songs: songs || [],
+        tags: tags || [],
+        owner: loggedinUser,
+        likedByUsers: [],
     }
+    logger.info('Station object to add:', JSON.stringify(stationToAdd))
     try {
-        station.owner = loggedinUser
-        const addedStation = await stationService.add(station)
-        res.json(addedStation)
+        logger.info('Calling stationService.add...');
+        const addedStation = await stationService.add(stationToAdd);
+        logger.info('stationService.add finished, addedStation._id:', addedStation?._id?.toString()); // הדפס רק את ה-ID לוודאות
+
+        logger.info('Attempting to send response...'); // <-- לוג חדש
+        res.send(JSON.stringify(addedStation))
+        logger.info('--- Response sent successfully from addStation controller ---'); // <-- לוג חדש (אם הצליח)
+
     } catch (err) {
-        logger.error('Failed to add station', err)
-        res.status(400).send({ err: 'Failed to add station' })
+        logger.error('Failed to add station in controller', err);
+        // חשוב: אם יש שגיאה, ודא שלא ניסית לשלוח תגובה קודם
+        if (!res.headersSent) {
+            res.status(400).send({ err: 'Failed to add station' });
+        }
     }
 }
 

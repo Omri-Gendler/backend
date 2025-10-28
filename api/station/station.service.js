@@ -74,14 +74,25 @@ async function remove(stationId) {
 }
 
 async function add(station) {
+    logger.info('--- Inside stationService.add ---');
     try {
-        const collection = await dbService.getCollection('station')
-        await collection.insertOne(station)
+        const collection = await dbService.getCollection('station');
+        logger.info('Got collection, attempting insertOne...');
 
-        return station
+        // === נסה להכניס אובייקט פשוט מאוד ===
+        const simpleData = { testField: "hello world", name: station.name || "Test" };
+        logger.info('Attempting to insert simple data:', JSON.stringify(simpleData));
+        const result = await collection.insertOne(simpleData); // <-- השתמש באובייקט הפשוט
+        // ===================================
+
+        logger.info('insertOne successful, result:', JSON.stringify(result));
+        // החזר את ה-ID שנוצר, או אובייקט כלשהו כדי שהקונטרולר יוכל להמשיך
+        station._id = result.insertedId;
+        logger.info('Returning station object with new ID:', JSON.stringify(station));
+        return station;
     } catch (err) {
-        logger.error('cannot insert station', err)
-        throw err
+        logger.error('cannot insert station in service', err);
+        throw err;
     }
 }
 
