@@ -3,6 +3,14 @@ import { Server } from 'socket.io'
 
 var gIo = null
 
+export const socketService = {
+    setupSocketAPI,
+    emitTo,
+    emitToUser,
+    broadcast,
+}
+
+
 export function setupSocketAPI(http) {
     gIo = new Server(http, {
         cors: {
@@ -11,13 +19,13 @@ export function setupSocketAPI(http) {
     })
     gIo.on('connection', socket => {
         logger.info(`New connected socket [id: ${socket.id}]`)
-        
+
         socket.on('disconnect', () => {
             logger.info(`Socket disconnected [id: ${socket.id}]`)
         })
 
         socket.on('station-join', stationId => {
-            if (socket.stationId === stationId) return; 
+            if (socket.stationId === stationId) return;
             if (socket.stationId) {
                 socket.leave(socket.stationId)
                 logger.info(`Socket [id: ${socket.id}] left station room ${socket.stationId}`)
@@ -42,9 +50,7 @@ export function setupSocketAPI(http) {
         socket.on('station-send-pause', (stationId) => {
             logger.info(`Socket [id: ${socket.id}] sent pause event for station ${stationId}`)
             socket.broadcast.to(stationId).emit('station-receive-pause', { stationId })
-            socket.broadcast.to(stationId).emit('station-receive-pause', { stationId })
         })
-        // ---------------------------------
 
         socket.on('chat-set-topic', topic => {
             if (socket.myTopic === topic) return
@@ -73,6 +79,7 @@ export function setupSocketAPI(http) {
         })
 
     })
+    console.log('--- handleReceivePlay END ---')
 }
 
 function emitTo({ type, data, label }) {
@@ -131,10 +138,4 @@ function _printSocket(socket) {
     console.log(`Socket - socketId: ${socket.id} userId: ${socket.userId}`)
 }
 
-export const socketService = {
-    setupSocketAPI,
-    emitTo,
-    emitToUser,
-    broadcast,
-}
 
