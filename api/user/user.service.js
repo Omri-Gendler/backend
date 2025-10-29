@@ -23,8 +23,6 @@ async function query(filterBy = {}) {
         users = users.map(user => {
             delete user.password
             user.createdAt = user._id.getTimestamp()
-            // Returning fake fresh data
-            // user.createdAt = Date.now() - (1000 * 60 * 60 * 24 * 3) // 3 days ago
             return user
         })
         return users
@@ -40,6 +38,12 @@ async function getById(userId) {
 
         const collection = await dbService.getCollection('user')
         const user = await collection.findOne(criteria)
+
+        if (!user) {
+            logger.error(`User not found with id: ${userId}`)
+            throw new Error(`User not found`)
+        }
+
         delete user.password
 
         criteria = { byUserId: userId }
@@ -84,9 +88,8 @@ async function remove(userId) {
 
 async function update(user) {
     try {
-        // peek only updatable properties
         const userToSave = {
-            _id: ObjectId.createFromHexString(user._id), // needed for the returnd obj
+            _id: ObjectId.createFromHexString(user._id),
             fullname: user.fullname,
             score: user.score,
         }
@@ -101,7 +104,6 @@ async function update(user) {
 
 async function add(user) {
     try {
-        // peek only updatable fields!
         const userToAdd = {
             username: user.username,
             password: user.password,
@@ -109,6 +111,7 @@ async function add(user) {
             imgUrl: user.imgUrl,
             isAdmin: user.isAdmin,
             score: 100,
+            likedSongs: []
         }
         const collection = await dbService.getCollection('user')
         await collection.insertOne(userToAdd)
@@ -156,10 +159,11 @@ async function addLikedSong(userId, song) {
         const userObjectId = ObjectId.createFromHexString(userId)
         const collection = await dbService.getCollection('user')
 
-        const user = await collection.findOne({ _id: userObjectId }, { projection: { likedSongs: 1 } })
-        if (user && user.likedSongs?.some(s => s.id === song.id)) {
+        const user = await collection.findOne({ _id: userObjectId, "likedSongs.id": song.id }, { projection: { _id: 1 } })
+        if (user) {
             logger.warn(`Song ${song.id} already liked by user ${userId}`)
-            return user
+            const currentUser = await getLikedSongs(userId);
+            return { likedSongs: currentUser };
         }
 
         const updateResult = await collection.updateOne(
@@ -167,12 +171,12 @@ async function addLikedSong(userId, song) {
             { $push: { likedSongs: song } }
         )
 
-        if (updateResult.modifiedCount === 0 && updateResult.matchedCount === 0) {
+        if (updateResult.matchedCount === 0) {
             throw new Error('User not found or song not added')
         }
 
-        const updatedUser = await collection.findOne({ _id: userObjectId }, { projection: { likedSongs: 1 } });
-        return updatedUser || { likedSongs: [] }
+        const updatedUser = await getLikedSongs(userId);
+        return { likedSongs: updatedUser || [] }
 
     } catch (err) {
         logger.error(`cannot add liked song ${song.id} for user ${userId}`, err)
@@ -189,8 +193,13 @@ async function removeLikedSong(userId, songIdToRemove) {
             { _id: userObjectId },
             { $pull: { likedSongs: { id: songIdToRemove } } }
         )
-        const updatedUser = await collection.findOne({ _id: userObjectId }, { projection: { likedSongs: 1 } })
-        return updatedUser || { likedSongs: [] }
+
+        if (updateResult.matchedCount === 0) {
+            throw new Error('User not found');
+        }
+
+        const updatedUser = await getLikedSongs(userId);
+        return { likedSongs: updatedUser || [] }
 
     } catch (err) {
         logger.error(`cannot remove liked song ${songIdToRemove} for user ${userId}`, err)

@@ -1,6 +1,6 @@
-import { ObjectId } from 'mongodb'
-import { logger } from '../../services/logger.service.js'
-import { stationService } from './station.service.js'
+import { ObjectId } from 'mongodb';
+import { logger } from '../../services/logger.service.js';
+import { stationService } from './station.service.js';
 
 export async function getStations(req, res) {
     try {
@@ -10,7 +10,7 @@ export async function getStations(req, res) {
             sortField: req.query.sortField || '',
             sortDir: req.query.sortDir || 1,
             pageIdx: req.query.pageIdx,
-        }
+        };
         const stations = await stationService.query(filterBy)
         res.json(stations)
     } catch (err) {
@@ -19,21 +19,9 @@ export async function getStations(req, res) {
     }
 }
 
-export function removeStationMsg(req, res) {
-    const { loggedinUser } = req
-
-    try {
-        const stationId = req.params.id
-        const msgId = req.params.msgId
-    } catch (err) {
-        logger.error('Failed to remove station msg', err)
-        res.status(400).send({ err: 'Failed to remove station msg' })
-    }
-}
-
 export async function getStationById(req, res) {
     try {
-        const stationId = req.params.id
+        const stationId = req.params.id;
         const station = await stationService.getById(stationId)
         res.json(station)
     } catch (err) {
@@ -45,58 +33,87 @@ export async function getStationById(req, res) {
 export async function addStation(req, res) {
     logger.info('--- Inside addStation controller ---');
     const { loggedinUser } = req;
-    const { name, description, imgUrl, songs, tags } = req.body;
+    const { name, description, imgUrl, songs, tags } = req.body
+
+    if (!loggedinUser || !loggedinUser._id) {
+        logger.error('addStation called without loggedinUser')
+        return res.status(401).send({ err: 'Not Authenticated' })
+    }
 
     const stationToAdd = {
         name: name || 'Unnamed Station',
         description: description || '',
         imgUrl: imgUrl || '/img/unnamed-song.png',
-        songs: songs || [],
-        tags: tags || [],
+        songs: Array.isArray(songs) ? songs : [],
+        tags: Array.isArray(tags) ? tags : [],
         owner: {
-            _id: ObjectId.createFromHexString(loggedinUser._id), // ודא ייבוא ObjectId
+            _id: ObjectId.createFromHexString(loggedinUser._id),
             fullname: loggedinUser.fullname || 'Unknown User'
         },
         likedByUsers: [],
     };
-    logger.info('Station object to add:', JSON.stringify(stationToAdd));
+    logger.info('Station object to add:', JSON.stringify(stationToAdd))
 
     try {
         logger.info('Calling stationService.add...');
-        const addedStation = await stationService.add(stationToAdd);
-        logger.info('stationService.add finished, addedStation._id:', addedStation?._id?.toString());
-        logger.info('Attempting to send response...');
-        res.json(addedStation);
-        logger.info('--- Response sent successfully from addStation controller ---');
-
+        const addedStation = await stationService.add(stationToAdd)
+        logger.info('stationService.add finished, addedStation._id:', addedStation?._id?.toString())
+        logger.info('Attempting to send response...')
+        res.status(201).json(addedStation)
+        logger.info('--- Response sent successfully from addStation controller ---')
     } catch (err) {
-        logger.error('Failed to add station in controller', err);
+        logger.error('Failed to add station in controller', err)
         if (!res.headersSent) {
-            res.status(400).send({ err: 'Failed to add station' });
+            res.status(500).send({ err: 'Failed to add station' })
         }
     }
 }
 
 export async function updateStation(req, res) {
-    const { loggedinUser, body: station } = req
+    const { loggedinUser, body: stationFromFrontend } = req
     const { _id: userId, isAdmin } = loggedinUser
     const stationId = req.params.id
-    const originalStation = await stationService.getById(stationId)
 
-    const isOwner = originalStation.owner?._id?.toString() === userId.toString() ||
-        originalStation.createdBy?._id?.toString() === userId.toString()
-
-    if (!isAdmin && !isOwner) {
-        logger.warn(`User ${userId} attempted to update station ${stationId} without permission.`)
-        return res.status(403).send({ err: 'Not authorized to update this station' })
+    const stationToUpdate = {
+        _id: stationId,
+        name: stationFromFrontend.name,
+        description: stationFromFrontend.description,
+        imgUrl: stationFromFrontend.imgUrl,
     }
 
     try {
-        const updatedStation = await stationService.update(station)
-        res.json(updatedStation)
+        logger.info(`Attempting to get station ${stationId} for update...`)
+        const originalStation = await stationService.getById(stationId)
+
+        if (!originalStation) {
+            logger.warn(`Station not found: ${stationId}`)
+            return res.status(404).send({ err: 'Station not found' })
+        }
+        logger.info(`Found station: ${originalStation.name}. Checking permissions...`)
+
+        const ownerId = originalStation.owner?._id?.toString()
+        const creatorId = originalStation.createdBy?._id?.toString()
+        const currentUserId = userId.toString()
+        const isOwner = (ownerId && ownerId === currentUserId)
+        const isCreator = (creatorId && creatorId === currentUserId)
+
+        logger.info(`Permission check: isAdmin(${isAdmin}), isOwner(${isOwner}), isCreator(${isCreator}), UserID(${currentUserId})`)
+
+        if (!isAdmin && !isOwner && !isCreator) {
+            logger.warn(`User ${currentUserId} attempted to update station ${stationId} without permission.`)
+            return res.status(403).send({ err: 'Not authorized to update this station' })
+        }
+
+        logger.info(`Permissions OK. Calling stationService.update for ${stationId}`)
+        const updatedStationResult = await stationService.update(stationToUpdate)
+        logger.info(`Station ${stationId} updated successfully.`)
+        res.json(updatedStationResult)
+
     } catch (err) {
-        logger.error('Failed to update station', err)
-        res.status(400).send({ err: 'Failed to update station' })
+        logger.error(`Failed to update station ${stationId}`, err)
+        if (!res.headersSent) {
+            res.status(500).send({ err: 'Failed to update station due to internal error' })
+        }
     }
 }
 
@@ -104,7 +121,6 @@ export async function removeStation(req, res) {
     try {
         const stationId = req.params.id
         const removedId = await stationService.remove(stationId)
-
         res.send(removedId)
     } catch (err) {
         logger.error('Failed to remove station', err)
@@ -114,7 +130,6 @@ export async function removeStation(req, res) {
 
 export async function addStationMsg(req, res) {
     const { loggedinUser } = req
-
     try {
         const stationId = req.params.id
         const msg = {
@@ -129,26 +144,14 @@ export async function addStationMsg(req, res) {
     }
 }
 
-export async function removeSongFromStation(req, res) {
-    const { loggedinUser } = req
-    const { id: stationId, songId } = req.params
-
-    if (!songId) {
-        return res.status(400).send({ err: 'Missing songId parameter' })
-    }
-
+export async function removeStationMsg(req, res) {
     try {
-        logger.info(`Attempting to remove song ${songId} from station ${stationId} by user ${loggedinUser._id}`)
-        const updatedStation = await stationService.removeSong(stationId, songId, loggedinUser)
-        logger.info(`Song ${songId} removed successfully from station ${stationId}`)
-        res.json(updatedStation)
+        const { id: stationId, msgId } = req.params
+        const removedId = await stationService.removeStationMsg(stationId, msgId)
+        res.send(removedId)
     } catch (err) {
-        if (err.message === 'Not authorized' || err.message === 'Station not found' || err.message === 'Song not found in station') {
-            logger.error(`Failed to remove song: ${err.message}. User: ${loggedinUser._id}, Station: ${stationId}, Song: ${songId}`)
-            return res.status(403).send({ err: err.message })
-        }
-        logger.error(`Failed to remove song ${songId} from station ${stationId}`, err)
-        res.status(500).send({ err: 'Failed to remove song' })
+        logger.error('Failed to remove station msg', err)
+        res.status(400).send({ err: 'Failed to remove station msg' })
     }
 }
 
@@ -164,7 +167,6 @@ export async function addSongToStation(req, res) {
 
     try {
         logger.info(`Attempting to add song ${songToAdd.id} to station ${stationId} by user ${loggedinUser._id}`)
-
         const songWithMeta = {
             ...songToAdd,
             addedBy: {
@@ -192,8 +194,31 @@ export async function addSongToStation(req, res) {
     }
 }
 
+export async function removeSongFromStation(req, res) {
+    const { loggedinUser } = req;
+    const { id: stationId, songId } = req.params
+
+    if (!songId) {
+        return res.status(400).send({ err: 'Missing songId parameter' })
+    }
+
+    try {
+        logger.info(`Attempting to remove song ${songId} from station ${stationId} by user ${loggedinUser._id}`)
+        const updatedStation = await stationService.removeSong(stationId, songId, loggedinUser)
+        logger.info(`Song ${songId} removed successfully from station ${stationId}`)
+        res.json(updatedStation)
+    } catch (err) {
+        if (err.message === 'Not authorized' || err.message === 'Station not found' || err.message === 'Song not found in station') {
+            logger.error(`Failed to remove song: ${err.message}. User: ${loggedinUser._id}, Station: ${stationId}, Song: ${songId}`)
+            return res.status(403).send({ err: err.message })
+        }
+        logger.error(`Failed to remove song ${songId} from station ${stationId}`, err)
+        res.status(500).send({ err: 'Failed to remove song' })
+    }
+}
+
 export async function likeStation(req, res) {
-    const { loggedinUser } = req
+    const { loggedinUser } = req;
     const { id: stationId } = req.params
     try {
         const updatedStation = await stationService.addLike(stationId, loggedinUser._id)
