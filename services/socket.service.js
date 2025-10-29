@@ -11,9 +11,41 @@ export function setupSocketAPI(http) {
     })
     gIo.on('connection', socket => {
         logger.info(`New connected socket [id: ${socket.id}]`)
-        socket.on('disconnect', socket => {
+        
+        socket.on('disconnect', () => {
             logger.info(`Socket disconnected [id: ${socket.id}]`)
         })
+
+        socket.on('station-join', stationId => {
+            if (socket.stationId === stationId) return; 
+            if (socket.stationId) {
+                socket.leave(socket.stationId)
+                logger.info(`Socket [id: ${socket.id}] left station room ${socket.stationId}`)
+            }
+            socket.join(stationId)
+            socket.stationId = stationId
+            logger.info(`Socket [id: ${socket.id}] joined station room ${stationId}`)
+        })
+
+        socket.on('station-leave', stationId => {
+            if (socket.stationId === stationId) {
+                socket.leave(stationId)
+                logger.info(`Socket [id: ${socket.id}] left station room ${stationId}`)
+                delete socket.stationId
+            }
+        })
+        socket.on('station-send-play', ({ stationId, index, song }) => {
+            logger.info(`Socket [id: ${socket.id}] sent play event for station ${stationId}, index ${index}`)
+            socket.broadcast.to(stationId).emit('station-receive-play', { stationId, index, song })
+        })
+
+        socket.on('station-send-pause', (stationId) => {
+            logger.info(`Socket [id: ${socket.id}] sent pause event for station ${stationId}`)
+            socket.broadcast.to(stationId).emit('station-receive-pause', { stationId })
+            socket.broadcast.to(stationId).emit('station-receive-pause', { stationId })
+        })
+        // ---------------------------------
+
         socket.on('chat-set-topic', topic => {
             if (socket.myTopic === topic) return
             if (socket.myTopic) {
@@ -25,9 +57,6 @@ export function setupSocketAPI(http) {
         })
         socket.on('chat-send-msg', msg => {
             logger.info(`New chat msg from socket [id: ${socket.id}], emitting to topic ${socket.myTopic}`)
-            // emits to all sockets:
-            // gIo.emit('chat addMsg', msg)
-            // emits only to sockets in the same room
             gIo.to(socket.myTopic).emit('chat-add-msg', msg)
         })
         socket.on('user-watch', userId => {
@@ -60,12 +89,9 @@ async function emitToUser({ type, data, userId }) {
         socket.emit(type, data)
     } else {
         logger.info(`No active socket for user: ${userId}`)
-        // _printSockets()
     }
 }
 
-// If possible, send to all sockets BUT not the current socket 
-// Optionally, broadcast to a room / to all
 async function broadcast({ type, data, room = null, userId }) {
     userId = userId.toString()
 
@@ -92,7 +118,6 @@ async function _getUserSocket(userId) {
     return socket
 }
 async function _getAllSockets() {
-    // return all Socket instances
     const sockets = await gIo.fetchSockets()
     return sockets
 }
@@ -107,13 +132,9 @@ function _printSocket(socket) {
 }
 
 export const socketService = {
-    // set up the sockets service and define the API
     setupSocketAPI,
-    // emit to everyone / everyone in a specific room (label)
     emitTo,
-    // emit to a specific user (if currently active in system)
     emitToUser,
-    // Send to all sockets BUT not the current socket - if found
-    // (otherwise broadcast to a room / to all)
     broadcast,
 }
+
