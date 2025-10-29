@@ -1,10 +1,8 @@
 import { ObjectId } from 'mongodb'
-
 import { logger } from '../../services/logger.service.js'
 import { makeId } from '../../services/util.service.js'
 import { dbService } from '../../services/db.service.js'
 import { asyncLocalStorage } from '../../services/als.service.js'
-
 
 const PAGE_SIZE = 3
 
@@ -16,8 +14,10 @@ export const stationService = {
     update,
     addSong,
     removeSong,
+    addStationMsg,
+    removeStationMsg,
     addLike,
-    removeLike,
+    removeLike
 }
 
 async function query(filterBy = { txt: '' }) {
@@ -47,7 +47,9 @@ async function getById(stationId) {
         const collection = await dbService.getCollection('station')
         const station = await collection.findOne(criteria)
 
-        station.createdAt = station._id.getTimestamp()
+        if (station) {
+            station.createdAt = station._id.getTimestamp()
+        }
         return station
     } catch (err) {
         logger.error(`while finding station ${stationId}`, err)
@@ -57,18 +59,25 @@ async function getById(stationId) {
 
 async function remove(stationId) {
     const { loggedinUser } = asyncLocalStorage.getStore()
-    const { _id: ownerId, isAdmin } = loggedinUser
+    const { _id: ownerIdString, isAdmin } = loggedinUser
 
     try {
         const criteria = {
             _id: ObjectId.createFromHexString(stationId),
         }
-        if (!isAdmin) criteria['owner._id'] = ownerId
+
+        if (!isAdmin) {
+            criteria['owner._id'] = ObjectId.createFromHexString(ownerIdString)
+        }
 
         const collection = await dbService.getCollection('station')
         const res = await collection.deleteOne(criteria)
 
-        if (res.deletedCount === 0) throw ('Not your station')
+        if (res.deletedCount === 0) {
+            logger.warn(`Remove failed: User ${ownerIdString} (isAdmin: ${isAdmin}) tried to delete ${stationId}. No document matched criteria.`)
+            throw ('Not your station or station not found')
+        }
+        logger.info(`Station ${stationId} removed successfully by user ${ownerIdString}`)
         return stationId
     } catch (err) {
         logger.error(`cannot remove station ${stationId}`, err)
@@ -95,9 +104,8 @@ async function add(station) {
 
 async function update(station) {
     const stationToSave = {
-        title: station.title,
+        name: station.name,
         description: station.description,
-        spotifyId: station.spotifyId,
         imgUrl: station.imgUrl
     }
 
@@ -105,9 +113,11 @@ async function update(station) {
         const criteria = { _id: ObjectId.createFromHexString(station._id) }
 
         const collection = await dbService.getCollection('station')
-        await collection.updateOne(criteria, { $set: stationToSave })
+        const updateResult = await collection.updateOne(criteria, { $set: stationToSave })
 
-        return station
+        if (updateResult.matchedCount === 0) throw new Error('Station not found for update')
+
+        return { ...station, ...stationToSave }
     } catch (err) {
         logger.error(`cannot update station ${station._id}`, err)
         throw err
@@ -143,25 +153,7 @@ async function removeStationMsg(stationId, msgId) {
     }
 }
 
-function _buildCriteria(filterBy) {
-    const criteria = {}
-
-    if (filterBy.txt) {
-        criteria.$or = [
-            { title: { $regex: filterBy.txt, $options: 'i' } },
-            { description: { $regex: filterBy.txt, $options: 'i' } }
-        ]
-    }
-
-    return criteria
-}
-
-function _buildSort(filterBy) {
-    if (!filterBy.sortField) return {}
-    return { [filterBy.sortField]: filterBy.sortDir }
-}
-
-export async function addSong(stationId, song, loggedinUser) {
+async function addSong(stationId, song, loggedinUser) {
     try {
         const collection = await dbService.getCollection('station')
         const stationObjectId = ObjectId.createFromHexString(stationId)
@@ -192,7 +184,7 @@ export async function addSong(stationId, song, loggedinUser) {
     }
 }
 
-export async function removeSong(stationId, songIdToRemove, loggedinUser) {
+async function removeSong(stationId, songIdToRemove, loggedinUser) {
     try {
         const collection = await dbService.getCollection('station')
         const stationObjectId = ObjectId.createFromHexString(stationId)
@@ -237,7 +229,7 @@ async function addLike(stationId, userId) {
         const updateResult = await collection.updateOne(
             { _id: stationObjectId },
             { $addToSet: { likedByUsers: userObjectId } }
-        )
+        );
 
         if (updateResult.matchedCount === 0) {
             throw new Error('Station not found')
@@ -247,7 +239,7 @@ async function addLike(stationId, userId) {
 
     } catch (err) {
         logger.error(`cannot add like to station ${stationId} for user ${userId}`, err)
-        throw err
+        throw err;
     }
 }
 
@@ -260,16 +252,35 @@ async function removeLike(stationId, userId) {
         const updateResult = await collection.updateOne(
             { _id: stationObjectId },
             { $pull: { likedByUsers: userObjectId } }
-        )
+        );
 
         if (updateResult.matchedCount === 0) {
             throw new Error('Station not found')
         }
         const updatedStation = await getById(stationId)
-        return updatedStation
+        return updatedStation;
 
     } catch (err) {
         logger.error(`cannot remove like from station ${stationId} for user ${userId}`, err)
         throw err
     }
+}
+
+
+function _buildCriteria(filterBy) {
+    const criteria = {}
+
+    if (filterBy.txt) {
+        criteria.$or = [
+            { name: { $regex: filterBy.txt, $options: 'i' } },
+            { description: { $regex: filterBy.txt, $options: 'i' } }
+        ]
+    }
+
+    return criteria
+}
+
+function _buildSort(filterBy) {
+    if (!filterBy.sortField) return {}
+    return { [filterBy.sortField]: filterBy.sortDir }
 }
