@@ -45,7 +45,7 @@ app.use(cors(corsOptions))
 // Handle preflight requests
 app.options('*', cors(corsOptions))
 
-app.all('*all', setupAsyncLocalStorage)
+app.all('*', setupAsyncLocalStorage)
 
 // Debug middleware for production
 if (process.env.NODE_ENV === 'production') {
@@ -78,7 +78,7 @@ setupSocketAPI(server)
 // it will still serve the index.html file
 // and allow vue/react-router to take it from there
 
-app.get('/*all', (req, res) => {
+app.get('*', (req, res) => {
     res.sendFile(path.resolve('public/index.html'))
 })
 
