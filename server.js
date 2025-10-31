@@ -25,7 +25,7 @@ app.use(express.json())
 // Always serve static files
 app.use(express.static(path.resolve('public')))
 
-// if (process.env.NODE_ENV !== 'production') {
+// CORS configuration for both development and production
 const corsOptions = {
     origin: [
         'http://127.0.0.1:3000',
@@ -33,13 +33,37 @@ const corsOptions = {
         'http://127.0.0.1:5173',
         'http://localhost:5173',
         'https://offbeat-front.onrender.com',
+        'https://offbeat-front.onrender.com/'  // with trailing slash
     ],
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 app.use(cors(corsOptions))
-// }
+
+// Handle preflight requests
+app.options('*', cors(corsOptions))
 
 app.all('*all', setupAsyncLocalStorage)
+
+// Debug middleware for production
+if (process.env.NODE_ENV === 'production') {
+    app.use((req, res, next) => {
+        console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - Origin: ${req.get('Origin')}`)
+        next()
+    })
+}
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development',
+        port: process.env.PORT || 3030
+    })
+})
 
 app.use('/api/auth', authRoutes)
 app.use('/api/user', userRoutes)
