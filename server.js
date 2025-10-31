@@ -35,6 +35,7 @@ const corsOptions = {
             'http://127.0.0.1:5173',
             'http://localhost:5173',
             'https://offbeat-front.onrender.com',
+            'https://offbeat-back.onrender.com',
         ];
         
         // Allow any render.com subdomain for development
