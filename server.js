@@ -25,17 +25,29 @@ app.use(express.static(path.resolve('public')))
 
 // CORS configuration for both development and production
 const corsOptions = {
-    origin: [
-        'http://127.0.0.1:3000',
-        'http://localhost:3000',
-        'http://127.0.0.1:5173',
-        'http://localhost:5173',
-        'https://offbeat-front.onrender.com',
-    ],
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        const allowedOrigins = [
+            'http://127.0.0.1:3000',
+            'http://localhost:3000',
+            'http://127.0.0.1:5173',
+            'http://localhost:5173',
+            'https://offbeat-front.onrender.com',
+        ];
+        
+        // Allow any render.com subdomain for development
+        if (origin.includes('.onrender.com') || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        
+        return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+    optionsSuccessStatus: 200 // some legacy browsers choke on 204
 }
 app.use(cors(corsOptions))
 
@@ -48,19 +60,59 @@ app.all('*', setupAsyncLocalStorage)
 // Debug middleware for production
 if (process.env.NODE_ENV === 'production') {
     app.use((req, res, next) => {
-        console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - Origin: ${req.get('Origin')}`)
+        console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - Origin: ${req.get('Origin')} - User-Agent: ${req.get('User-Agent')}`)
         next()
     })
 }
 
+// Global error handler
+app.use((err, req, res, next) => {
+    console.error('Global error handler:', err);
+    if (err.message === 'Not allowed by CORS') {
+        return res.status(403).json({ error: 'CORS: Origin not allowed' });
+    }
+    res.status(500).json({ error: 'Internal server error', message: err.message });
+});
+
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+    try {
+        // Basic health check
+        const healthData = {
+            status: 'OK',
+            timestamp: new Date().toISOString(),
+            environment: process.env.NODE_ENV || 'development',
+            port: process.env.PORT || 3030,
+            uptime: process.uptime(),
+            cors: 'enabled'
+        };
+        
+        res.json(healthData);
+    } catch (error) {
+        console.error('Health check failed:', error);
+        res.status(500).json({
+            status: 'ERROR',
+            timestamp: new Date().toISOString(),
+            error: error.message
+        });
+    }
+})
+
+// Root endpoint for testing
+app.get('/', (req, res) => {
     res.json({
-        status: 'OK',
+        message: 'Offbeat Backend API',
+        version: '1.0.0',
         timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development',
-        port: process.env.PORT || 3030
-    })
+        endpoints: {
+            health: '/api/health',
+            auth: '/api/auth',
+            users: '/api/user',
+            stations: '/api/station',
+            reviews: '/api/review',
+            youtube: '/api/youtube'
+        }
+    });
 })
 
 app.use('/api/auth', authRoutes)
@@ -82,6 +134,10 @@ app.get('*', (req, res) => {
 import { logger } from './services/logger.service.js'
 const port = process.env.PORT || 3030
 
-server.listen(port, () => {
+server.listen(port, '0.0.0.0', () => {
     logger.info('Server is running on port: ' + port)
+    console.log(`🌐 Server is accessible at: http://localhost:${port}`)
+    if (process.env.NODE_ENV === 'production') {
+        console.log('🚀 Running in PRODUCTION mode')
+    }
 })
