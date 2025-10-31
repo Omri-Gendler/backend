@@ -25,17 +25,17 @@ app.use(express.static(path.resolve('public')))
 
 // CORS configuration for both development and production
 const corsOptions = {
-origin: [
-    'http://127.0.0.1:3000',
-    'http://localhost:3000',
-    'http://127.0.0.1:5173',
-    'http://localhost:5173',
-    'https://offbeat-front.onrender.com',
-],
-credentials: true,
-methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+    origin: [
+        'http://127.0.0.1:3000',
+        'http://localhost:3000',
+        'http://127.0.0.1:5173',
+        'http://localhost:5173',
+        'https://offbeat-front.onrender.com',
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 app.use(cors(corsOptions))
 
@@ -48,20 +48,20 @@ app.use(cors(corsOptions))
 
 // Debug middleware for production
 if (process.env.NODE_ENV === 'production') {
-app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - Origin: ${req.get('Origin')}`)
-    next()
-})
+    app.use((req, res, next) => {
+        console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - Origin: ${req.get('Origin')}`)
+        next()
+    })
 }
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    port: process.env.PORT || 3030
-})
+    res.json({
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development',
+        port: process.env.PORT || 3030
+    })
 })
 
 app.use('/api/auth', authRoutes)
@@ -77,12 +77,12 @@ setupSocketAPI(server)
 // it will still serve the index.html file
 // and allow vue/react-router to take it from there
 app.get('*', (req, res) => {
-res.sendFile(path.resolve('public/index.html'))
+    res.sendFile(path.resolve('public/index.html'))
 })
 
 import { logger } from './services/logger.service.js'
 const port = process.env.PORT || 3030
 
 server.listen(port, () => {
-logger.info('Server is running on port: ' + port)
+    logger.info('Server is running on port: ' + port)
 })
