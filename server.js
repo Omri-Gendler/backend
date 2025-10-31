@@ -12,7 +12,6 @@ import { reviewRoutes } from './api/review/review.routes.js'
 import { stationRoutes } from './api/station/station.routes.js'
 import { youtubeRoutes } from './api/youtube/youtube.routes.js'
 import { setupSocketAPI } from './services/socket.service.js'
-
 import { setupAsyncLocalStorage } from './middlewares/setupAls.middleware.js'
 
 const app = express()
@@ -74,7 +73,7 @@ app.use('/api/youtube', youtubeRoutes)
 setupSocketAPI(server)
 
 // Make every unhandled server-side-route match index.html
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
     res.sendFile(path.resolve('public/index.html'))
 })
 
