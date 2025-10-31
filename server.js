@@ -73,7 +73,10 @@ app.use('/api/youtube', youtubeRoutes)
 setupSocketAPI(server)
 
 // Make every unhandled server-side-route match index.html
-app.get('/*', (req, res) => {
+// so when requesting http://localhost:3030/unhandled-route... 
+// it will still serve the index.html file
+// and allow vue/react-router to take it from there
+app.get('*', (req, res) => {
     res.sendFile(path.resolve('public/index.html'))
 })
 
