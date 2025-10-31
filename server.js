@@ -40,9 +40,11 @@ optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke
 app.use(cors(corsOptions))
 
 // Handle preflight requests
-app.options('*', cors(corsOptions))
+// Temporarily disabled to isolate path-to-regexp issue
+// app.options('*', cors(corsOptions))
 
-app.all('*', setupAsyncLocalStorage)
+// Temporarily disabled to isolate path-to-regexp issue  
+// app.all('*', setupAsyncLocalStorage)
 
 // Debug middleware for production
 if (process.env.NODE_ENV === 'production') {
@@ -71,7 +73,10 @@ app.use('/api/youtube', youtubeRoutes)
 setupSocketAPI(server)
 
 // Make every unhandled server-side-route match index.html
-app.get('/*', (req, res) => {
+// so when requesting http://localhost:3030/unhandled-route... 
+// it will still serve the index.html file
+// and allow vue/react-router to take it from there
+app.get('*', (req, res) => {
 res.sendFile(path.resolve('public/index.html'))
 })
 
