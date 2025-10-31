@@ -5,7 +5,6 @@ import path from 'path'
 import cors from 'cors'
 import express from 'express'
 import cookieParser from 'cookie-parser'
-
 import { authRoutes } from './api/auth/auth.routes.js'
 import { userRoutes } from './api/user/user.routes.js'
 import { reviewRoutes } from './api/review/review.routes.js'
@@ -32,7 +31,6 @@ const corsOptions = {
         'http://127.0.0.1:5173',
         'http://localhost:5173',
         'https://offbeat-front.onrender.com',
-        'https://offbeat-front.onrender.com/' // with trailing slash
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
