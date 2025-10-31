@@ -10,6 +10,7 @@ import { authRoutes } from './api/auth/auth.routes.js'
 import { userRoutes } from './api/user/user.routes.js'
 import { reviewRoutes } from './api/review/review.routes.js'
 import { stationRoutes } from './api/station/station.routes.js'
+import { youtubeRoutes } from './api/youtube/youtube.routes.js'
 import { setupSocketAPI } from './services/socket.service.js'
 
 import { setupAsyncLocalStorage } from './middlewares/setupAls.middleware.js'
@@ -30,7 +31,8 @@ const corsOptions = {
         'http://127.0.0.1:3000',
         'http://localhost:3000',
         'http://127.0.0.1:5173',
-        'http://localhost:5173'
+        'http://localhost:5173',
+        'https://offbeat-front.onrender.com',
     ],
     credentials: true
 }
@@ -43,6 +45,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/user', userRoutes)
 app.use('/api/review', reviewRoutes)
 app.use('/api/station', stationRoutes)
+app.use('/api/youtube', youtubeRoutes)
 
 setupSocketAPI(server)
 

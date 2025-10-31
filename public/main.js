@@ -1,6 +1,7 @@
+import { carService } from './services/car.service.js'
 import { stationService } from './services/station.service.js'
-import { stationService } from './services/station.service.js'
-import { userService } from './services/user.service.js'
+import { userService } from './services/user.service.js' 
+import { youtubeService } from './services/youtube.service.js'
 import { prettyJSON } from './services/util.service.js'
 
 console.log('Simple driver to test some API calls')
@@ -89,6 +90,39 @@ async function onAddStationMsg() {
     const savedMsg = await stationService.addStationMsg(id, 'some station msg')
     render('Saved Station Msg', savedMsg)
 }
+
+// YouTube functions
+async function onSearchYouTube() {
+    const query = prompt('Search query?')
+    if (!query) return
+    
+    const results = await youtubeService.search(query, { maxResults: 10 })
+    render('YouTube Search Results', results)
+}
+
+async function onGetVideoDetails() {
+    const videoId = prompt('YouTube Video ID?')
+    if (!videoId) return
+    
+    const details = await youtubeService.getVideoDetails(videoId)
+    render('YouTube Video Details', details)
+}
+
+async function onGetCacheStats() {
+    const stats = await youtubeService.getCacheStats()
+    render('YouTube Cache Statistics', stats)
+}
+
+async function onClearCache() {
+    await userService.login({ username: 'puki', password: '123' })
+    const result = await youtubeService.clearCache()
+    render('Cache Cleared', result)
+}
+
+window.onSearchYouTube = onSearchYouTube
+window.onGetVideoDetails = onGetVideoDetails
+window.onGetCacheStats = onGetCacheStats
+window.onClearCache = onClearCache
 
 function render(title, mix = '') {
     console.log(title, mix)
