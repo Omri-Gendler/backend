@@ -76,9 +76,11 @@ setupSocketAPI(server)
 // so when requesting http://localhost:3030/unhandled-route... 
 // it will still serve the index.html file
 // and allow vue/react-router to take it from there
-app.get('*', (req, res) => {
-    res.sendFile(path.resolve('public/index.html'))
-})
+
+// Temporarily disabled to isolate path-to-regexp issue
+// app.get('*', (req, res) => {
+//     res.sendFile(path.resolve('public/index.html'))
+// })
 
 import { logger } from './services/logger.service.js'
 const port = process.env.PORT || 3030
