@@ -33,7 +33,7 @@ const corsOptions = {
         'http://127.0.0.1:5173',
         'http://localhost:5173',
         'https://offbeat-front.onrender.com',
-        'https://offbeat-front.onrender.com/'  // with trailing slash
+        'https://offbeat-front.onrender.com/' // with trailing slash
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -74,10 +74,6 @@ app.use('/api/youtube', youtubeRoutes)
 setupSocketAPI(server)
 
 // Make every unhandled server-side-route match index.html
-// so when requesting http://localhost:3030/unhandled-route... 
-// it will still serve the index.html file
-// and allow vue/react-router to take it from there
-
 app.get('*', (req, res) => {
     res.sendFile(path.resolve('public/index.html'))
 })
