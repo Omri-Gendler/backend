@@ -40,11 +40,10 @@ const corsOptions = {
 app.use(cors(corsOptions))
 
 // Handle preflight requests
-// Temporarily disabled to isolate path-to-regexp issue
-// app.options('*', cors(corsOptions))
+app.options('*', cors(corsOptions))
 
-// Temporarily disabled to isolate path-to-regexp issue  
-// app.all('*', setupAsyncLocalStorage)
+// Setup async local storage for request tracking
+app.all('*', setupAsyncLocalStorage)
 
 // Debug middleware for production
 if (process.env.NODE_ENV === 'production') {
