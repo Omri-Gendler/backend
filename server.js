@@ -47,7 +47,8 @@ const corsOptions = {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
+    exposedHeaders: ['Set-Cookie'],
     optionsSuccessStatus: 200 // some legacy browsers choke on 204
 }
 app.use(cors(corsOptions))
@@ -61,7 +62,7 @@ app.all('*', setupAsyncLocalStorage)
 // Debug middleware for production
 if (process.env.NODE_ENV === 'production') {
     app.use((req, res, next) => {
-        console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - Origin: ${req.get('Origin')} - User-Agent: ${req.get('User-Agent')}`)
+        console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - Origin: ${req.get('Origin')} - Has Cookie: ${!!req.headers.cookie}`)
         next()
     })
 }

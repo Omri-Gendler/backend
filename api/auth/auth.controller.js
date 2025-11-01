@@ -10,8 +10,8 @@ export async function login(req, res) {
         logger.info('User login: ', user)
 
         const cookieOptions = process.env.NODE_ENV === 'production' 
-            ? { sameSite: 'None', secure: true }
-            : { httpOnly: true }
+            ? { httpOnly: true, sameSite: 'None', secure: true, maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+            : { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 }
         
         res.cookie('loginToken', loginToken, cookieOptions)
         res.json(user)
@@ -37,8 +37,8 @@ export async function signup(req, res) {
         const loginToken = authService.getLoginToken(user)
         
         const cookieOptions = process.env.NODE_ENV === 'production' 
-            ? { sameSite: 'None', secure: true }
-            : { httpOnly: true }
+            ? { httpOnly: true, sameSite: 'None', secure: true, maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+            : { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 }
         
         res.cookie('loginToken', loginToken, cookieOptions)
         res.json(user)
@@ -50,7 +50,11 @@ export async function signup(req, res) {
 
 export async function logout(req, res) {
     try {
-        res.clearCookie('loginToken')
+        const cookieOptions = process.env.NODE_ENV === 'production' 
+            ? { httpOnly: true, sameSite: 'None', secure: true }
+            : { httpOnly: true }
+        
+        res.clearCookie('loginToken', cookieOptions)
         res.send({ msg: 'Logged out successfully' })
     } catch (err) {
         res.status(400).send({ err: 'Failed to logout' })
